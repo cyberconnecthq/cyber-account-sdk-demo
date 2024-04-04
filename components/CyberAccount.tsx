@@ -289,10 +289,15 @@ function CyberAccount() {
     account: KernelSmartAccount;
     signer: SmartAccountSigner;
   }) => {
+    const authResponse = await fetch("/api/auth", {
+      method: "POST",
+      body: JSON.stringify({ sender: account.address }),
+    }).then((res) => res.json());
+
     const paymasterClient = createCyberPaymasterClient({
       signer,
       url: PAYMASTER_URL,
-      jwt: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0ZXN0IiwiaWF0IjoxNzExNDk2NDcxLCJleHAiOjIwNTg1NjUyNzEsImFpZCI6IjZjNmU4MTUyLTUzNDMtNDUwNS04MWEzLWNmOTdjZjU4NzNjYSIsInNlbmRlciI6IjB4MDMzYjJGOWU2MTJCM2Q2MzM1MzdEQUE5MzY3M2JGQjBENUVmMEY2QSJ9.RATs-u3X96DRz3w6mHUw4C0f6NDbmgfETm25dhuJxe5iVTpd2-_-sDmCDA4gB3uyEncutzDNIejWLnQcIai5RqTxMal4y50dx-IFJkErQMnA3R9yCPS70PX5utJUKhCQ1TIX4qLNWZzgwMKZaFhG9gSAdUSFxjl_VSgISb6ZYOdPHYc_-AQ6BG8m6NNuoZvYOWAJhzoUuGv5z_22K6YcgExRVM-pJKcFezzSm3658u4tV407ZYF76fKJjfhXE9gDlD1rtTDK8AJCneMryZDx-vUPbZh1oxDY-JVQw3PahVOisRU0OJ8MEtJxF3k9EPvmgQXBx3Pzsbdxtyn8dyuIhA",
+      jwt: authResponse.token,
     });
 
     const kernelClient = createKernelAccountClient({
@@ -301,10 +306,10 @@ function CyberAccount() {
       transport: http(BUNDLER_RPC),
 
       // Enable paymaster will cause error:: SessionKeyValidator: No matching permission found for the userOp
-      // sponsorUserOperation: paymasterClient?.sponsorUserOperation
-      //   ? async ({ userOperation }) =>
-      //       await paymasterClient.sponsorUserOperation({ userOperation })
-      //   : undefined,
+      sponsorUserOperation: paymasterClient?.sponsorUserOperation
+        ? async ({ userOperation }) =>
+            await paymasterClient.sponsorUserOperation({ userOperation })
+        : undefined,
     });
 
     return kernelClient as KernelAccountClient<
@@ -350,35 +355,26 @@ function CyberAccount() {
     if (!publicClient || !smartAccountSigner || !cyberAccount) return;
 
     let cyberAccountSessionKeyAccount: KernelSmartAccount;
-    const sessionKeyAccount = localStorage.getItem("sessionKeyAccount");
 
-    if (sessionKeyAccount) {
-      cyberAccountSessionKeyAccount = await deserializeSessionKeyAccount(
-        publicClient,
-        sessionKeyAccount,
-      );
-    } else {
-      // ------------------- Create SessionKeyAccount -------------------
-      const sessionPrivateKey = generatePrivateKey();
-      const sessionKeySigner = privateKeyToAccount(sessionPrivateKey);
+    // ------------------- Create SessionKeyAccount -------------------
+    const sessionPrivateKey = generatePrivateKey();
+    const sessionKeySigner = privateKeyToAccount(sessionPrivateKey);
 
-      cyberAccountSessionKeyAccount = await createSessionKeyAccount(
-        publicClient,
-        {
-          masterAccountSigner: smartAccountSigner,
-          signer: sessionKeySigner,
-          masterAccount: cyberAccount,
-        },
-      );
+    cyberAccountSessionKeyAccount = await createSessionKeyAccount(
+      publicClient,
+      {
+        masterAccountSigner: smartAccountSigner,
+        signer: sessionKeySigner,
+        masterAccount: cyberAccount,
+      },
+    );
 
-      const serializedAccount = await serializeSessionKeyAccount(
-        cyberAccountSessionKeyAccount,
-        sessionPrivateKey,
-      );
+    const serializedAccount = await serializeSessionKeyAccount(
+      cyberAccountSessionKeyAccount,
+      sessionPrivateKey,
+    );
 
-      console.log("serializedAccount", serializedAccount);
-      localStorage.setItem("sessionKeyAccount", serializedAccount);
-    }
+    console.log("serializedAccount", serializedAccount);
 
     const sessionKeyAccountClient = await createAccountClient({
       signer: smartAccountSigner,
