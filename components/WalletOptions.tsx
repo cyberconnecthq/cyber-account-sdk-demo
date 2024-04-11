@@ -7,7 +7,7 @@ const WalletOptions = () => {
   const { disconnect } = useDisconnect();
 
   return (
-    <div className="flex gap-x-8">
+    <div className="flex gap-x-8 justify-center">
       {connectors.map((connector) => (
         <Button key={connector.uid} onClick={() => connect({ connector })}>
           {connector.name}

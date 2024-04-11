@@ -6,7 +6,7 @@ function Account() {
   return (
     <div>
       <p className="text-lg font-bold">EOA</p>
-      {address && <div>{address}</div>}
+      <div>Address: {address || "-"}</div>
     </div>
   );
 }
