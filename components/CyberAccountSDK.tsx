@@ -8,7 +8,7 @@ import {
   useSignMessage,
 } from "wagmi";
 import { encodeFunctionData, parseAbi, type Hex } from "viem";
-import { polygonMumbai } from "viem/chains";
+import { optimismSepolia } from "viem/chains";
 import { Button } from "@/components/ui/button";
 import { ParamOperator } from "@zerodev/session-key";
 import {
@@ -134,7 +134,7 @@ function CyberAccountSDK() {
 
     const cyberAccount = new CyberAccount({
       chain: {
-        id: polygonMumbai.id,
+        id: optimismSepolia.id,
         testnet: true,
       },
       owner: {
@@ -315,7 +315,7 @@ function CyberAccountSDK() {
               className="text-blue-500"
               target="_blank"
               href={
-                polygonMumbai.blockExplorers.default.url +
+                optimismSepolia.blockExplorers.default.url +
                 "/tx/" +
                 mintWithCyberAccountHash
               }
@@ -376,7 +376,7 @@ function CyberAccountSDK() {
               className="text-blue-500"
               target="_blank"
               href={
-                polygonMumbai.blockExplorers.default.url +
+                optimismSepolia.blockExplorers.default.url +
                 "/tx/" +
                 mintWithSessionKeyAccountHash
               }
@@ -459,7 +459,7 @@ function CyberAccountSDK() {
               className="text-blue-500"
               target="_blank"
               href={
-                polygonMumbai.blockExplorers.default.url +
+                optimismSepolia.blockExplorers.default.url +
                 "/tx/" +
                 mintWithDeserializedSessionKeyAccountHash
               }
