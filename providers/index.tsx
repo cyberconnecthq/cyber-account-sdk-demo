@@ -1,16 +1,16 @@
 "use client";
 import React from "react";
 import { http, createConfig } from "wagmi";
-import { polygonMumbai } from "wagmi/chains";
+import { optimismSepolia } from "wagmi/chains";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
 const config = createConfig({
-  chains: [polygonMumbai],
+  chains: [optimismSepolia],
   transports: {
-    [polygonMumbai.id]: http("https://polygon-mumbai-pokt.nodies.app"),
-  },
+    [optimismSepolia.id]:http('https://sepolia.optimism.io')
+  }
 });
 
 const Provider = ({ children }: { children: React.ReactNode }) => (

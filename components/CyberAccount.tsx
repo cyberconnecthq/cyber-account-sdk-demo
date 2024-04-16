@@ -20,7 +20,7 @@ import {
   PublicClient,
   zeroAddress,
 } from "viem";
-import { polygonMumbai } from "viem/chains";
+import { optimismSepolia } from "viem/chains";
 import {
   walletClientToSmartAccountSigner,
   UserOperation as GenericUserOperation,
@@ -81,8 +81,8 @@ BigInt.prototype.toJSON = function () {
   return this.toString();
 };
 
-const BUNDLER_RPC = `https://api.stg.cyberconnect.dev/cyberaccount/bundler/v1/rpc?chainId=${polygonMumbai.id}&appId=6c6e8152-5343-4505-81a3-cf97cf5873ca`;
-const PAYMASTER_URL = `https://api.stg.cyberconnect.dev/cyberaccount/paymaster/v1/rpc?chainId=${polygonMumbai.id}&appId=6c6e8152-5343-4505-81a3-cf97cf5873ca`;
+const BUNDLER_RPC = `https://api.stg.cyberconnect.dev/cyberaccount/bundler/v1/rpc?chainId=${optimismSepolia.id}&appId=6c6e8152-5343-4505-81a3-cf97cf5873ca`;
+const PAYMASTER_URL = `https://api.stg.cyberconnect.dev/cyberaccount/paymaster/v1/rpc?chainId=${optimismSepolia.id}&appId=6c6e8152-5343-4505-81a3-cf97cf5873ca`;
 
 const contractAddress = "0x34bE7f35132E97915633BC1fc020364EA5134863";
 
@@ -240,7 +240,7 @@ function CyberAccount() {
     signer: SmartAccountSigner;
   }) => {
     const client = createClient({
-      chain: polygonMumbai,
+      chain: optimismSepolia,
       transport: http(url, {
         fetchOptions: {
           headers: {
@@ -302,7 +302,7 @@ function CyberAccount() {
 
     const kernelClient = createKernelAccountClient({
       account: account,
-      chain: polygonMumbai,
+      chain: optimismSepolia,
       transport: http(BUNDLER_RPC),
 
       // Enable paymaster will cause error:: SessionKeyValidator: No matching permission found for the userOp
