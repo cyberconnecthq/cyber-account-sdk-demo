@@ -142,7 +142,7 @@ function CyberAccountSDK() {
         signMessage: sign,
       },
       bundler: cyberBundler,
-      paymaster: cyberPaymaster,
+      // paymaster: cyberPaymaster,
     });
 
     setCyberAccount(cyberAccount);
