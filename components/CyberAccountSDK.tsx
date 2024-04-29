@@ -7,8 +7,8 @@ import {
   useConfig,
   useSignMessage,
 } from "wagmi";
-import { encodeFunctionData, parseAbi, type Hex } from "viem";
-import { optimismSepolia } from "viem/chains";
+import { encodeFunctionData, parseAbi, type Hex, zeroAddress, pad } from "viem";
+import { polygonAmoy } from "viem/chains";
 import { Button } from "@/components/ui/button";
 import { ParamOperator } from "@zerodev/session-key";
 import {
@@ -38,7 +38,7 @@ const APP_ID = "6c6e8152-5343-4505-81a3-cf97cf5873ca";
 const BUNDLER_RPC = `https://api.stg.cyberconnect.dev/cyberaccount/bundler/v1/rpc`;
 const PAYMASTER_URL = `https://api.stg.cyberconnect.dev/cyberaccount/paymaster/v1/rpc`;
 
-const contractAddress = "0x34bE7f35132E97915633BC1fc020364EA5134863";
+const contractAddress = "0x6651Fa0D314C5b5818d60320C6809f6D5254Fdb9";
 
 const contractABI = parseAbi([
   "function mint(address _to) public",
@@ -134,7 +134,7 @@ function CyberAccountSDK() {
 
     const cyberAccount = new CyberAccount({
       chain: {
-        id: optimismSepolia.id,
+        id: polygonAmoy.id,
         testnet: true,
       },
       owner: {
@@ -155,12 +155,8 @@ function CyberAccountSDK() {
     const res = await cyberAccount
       .sendTransaction({
         to: contractAddress,
-        value: BigInt(0),
-        data: encodeFunctionData({
-          abi: contractABI,
-          functionName: "mint",
-          args: [cyberAccount.address],
-        }),
+        value: BigInt(0.001*1e18),
+        data: "0x",
       })
       .finally(() => {
         setMintingWithCyberAccount(false);
@@ -206,19 +202,10 @@ function CyberAccountSDK() {
       cyberAccount,
       sessionKeySigner,
       validatorData: {
-        // paymaster: oneAddress,
         permissions: [
           {
-            target: contractAddress,
-            valueLimit: BigInt(0),
-            abi: contractABI,
-            functionName: "mint",
-            args: [
-              {
-                operator: ParamOperator.EQUAL,
-                value: cyberAccount.address,
-              },
-            ],
+            target: zeroAddress,
+            valueLimit: BigInt(1 * 1e18),
           },
         ],
       },
@@ -264,12 +251,8 @@ function CyberAccountSDK() {
 
       const res = await sessionKeyAccountClient?.sendTransaction({
         to: contractAddress,
-        value: BigInt(0),
-        data: encodeFunctionData({
-          abi: contractABI,
-          functionName: "mint",
-          args: [cyberAccount.address],
-        }),
+        value: BigInt(0.001 * 1e18),
+        data: pad("0x", { size: 4 }),
       });
 
       setMintingWithSessionKeyAccount(false);
@@ -315,7 +298,7 @@ function CyberAccountSDK() {
               className="text-blue-500"
               target="_blank"
               href={
-                optimismSepolia.blockExplorers.default.url +
+                polygonAmoy.blockExplorers.default.url +
                 "/tx/" +
                 mintWithCyberAccountHash
               }
@@ -376,7 +359,7 @@ function CyberAccountSDK() {
               className="text-blue-500"
               target="_blank"
               href={
-                optimismSepolia.blockExplorers.default.url +
+                polygonAmoy.blockExplorers.default.url +
                 "/tx/" +
                 mintWithSessionKeyAccountHash
               }
@@ -459,7 +442,7 @@ function CyberAccountSDK() {
               className="text-blue-500"
               target="_blank"
               href={
-                optimismSepolia.blockExplorers.default.url +
+                polygonAmoy.blockExplorers.default.url +
                 "/tx/" +
                 mintWithDeserializedSessionKeyAccountHash
               }

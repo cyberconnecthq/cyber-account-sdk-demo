@@ -19,7 +19,7 @@ const WalletOptions = () => {
           Disconnect
         </Button>
       </div>
-      <p className="w-full font-bold">Network: Optimism Sepolia</p>
+      <p className="w-full font-bold">Network: Polygon Amoy</p>
     </div>
   );
 };

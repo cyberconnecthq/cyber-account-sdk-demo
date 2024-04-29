@@ -1,15 +1,15 @@
 "use client";
 import React from "react";
 import { http, createConfig } from "wagmi";
-import { optimismSepolia } from "wagmi/chains";
+import { polygonAmoy } from "wagmi/chains";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
 const config = createConfig({
-  chains: [optimismSepolia],
+  chains: [polygonAmoy],
   transports: {
-    [optimismSepolia.id]: http("https://sepolia.optimism.io	"),
+    [polygonAmoy.id]: http("https://polygon-amoy.blockpi.network/v1/rpc/public"),
   },
 });
 
