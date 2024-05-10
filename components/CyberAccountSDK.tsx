@@ -7,7 +7,15 @@ import {
   useConfig,
   useSignMessage,
 } from "wagmi";
-import { encodeFunctionData, parseAbi, type Hex } from "viem";
+import {
+  encodeAbiParameters,
+  encodeFunctionData,
+  hexToBytes,
+  parseAbi,
+  parseAbiParameters,
+  encodePacked,
+  type Hex,
+} from "viem";
 import { optimismSepolia } from "viem/chains";
 import { Button } from "@/components/ui/button";
 import { ParamOperator } from "@zerodev/session-key";
@@ -26,6 +34,9 @@ import {
   type SessionKeyAccountClient,
 } from "@cyberlab/cyber-account-plugins";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import SwapSigner from "./SwapSigner";
+import { useWriteContract } from "wagmi";
+import abi from "@/app/abi.json";
 
 const sessionPrivateKey = generatePrivateKey();
 const sessionKeySigner = privateKeyToAccount(sessionPrivateKey);
@@ -71,6 +82,8 @@ function CyberAccountSDK() {
     useState<string>();
 
   const [mintingWithCyberAccount, setMintingWithCyberAccount] = useState(false);
+  const [swapingSigner, setSwapingSigner] = useState(false);
+  const [swapSignerHash, setSwapSignerHash] = useState<string>();
   const [mintingWithSessionKeyAccount, setMintingWithSessionKeyAccount] =
     useState(false);
 
@@ -101,6 +114,7 @@ function CyberAccountSDK() {
     account: eoaAddress,
   });
   const { signMessageAsync } = useSignMessage();
+  const { writeContract } = useWriteContract();
 
   useEffect(() => {
     if (!eoaAddress) {
@@ -147,6 +161,26 @@ function CyberAccountSDK() {
 
     setCyberAccount(cyberAccount);
   }, [eoaAddress]);
+
+  const handleSwapSigner = async (newSigner?: Hex) => {
+    if (newSigner && cyberAccount) {
+      setSwapingSigner(true);
+      const res = await cyberAccount
+        .sendTransaction({
+          to: "0x417f5a41305DDc99D18B5E176521b468b2a31B86",
+          data: encodeFunctionData({
+            abi: abi,
+            functionName: "enable",
+            args: [encodePacked(["bytes"], [newSigner])],
+          }),
+        })
+        .finally(() => {
+          setSwapingSigner(false);
+        });
+
+      setSwapSignerHash(res);
+    }
+  };
 
   const mint = async () => {
     if (!cyberAccount) return;
@@ -326,6 +360,12 @@ function CyberAccountSDK() {
             "-"
           )}
         </div>
+        <SwapSigner
+          cyberAccount={cyberAccount?.address}
+          swap={handleSwapSigner}
+          loading={swapingSigner}
+          hash={swapSignerHash}
+        />
       </div>
       <div className="flex flex-col gap-y-4">
         <p className="text-lg font-bold">Session Key Account</p>

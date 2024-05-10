@@ -7,16 +7,26 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
 const config = createConfig({
-  chains: [optimismSepolia],
+  chains: [
+    {
+      ...optimismSepolia,
+      blockExplorers: {
+        default: {
+          name: "OP Sepolia Network Explorer",
+          url: "https://sepolia-optimism.etherscan.io",
+        },
+      },
+    },
+  ],
   transports: {
     [optimismSepolia.id]: http("https://sepolia.optimism.io	"),
   },
 });
 
 const Provider = ({ children }: { children: React.ReactNode }) => (
-  <QueryClientProvider client={queryClient}>
-    <WagmiProvider config={config}>{children}</WagmiProvider>
-  </QueryClientProvider>
+  <WagmiProvider config={config}>
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  </WagmiProvider>
 );
 
 export default Provider;
