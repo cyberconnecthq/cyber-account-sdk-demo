@@ -9,8 +9,8 @@ dependencies:
     specifier: 3.0.0-beta.1
     version: 3.0.0-beta.1(typescript@5.4.5)(zod@3.22.4)
   '@cyberlab/cyber-account-plugins':
-    specifier: ^0.0.3
-    version: 0.0.3(zod@3.22.4)
+    specifier: 0.0.5-beta.1
+    version: 0.0.5-beta.1(zod@3.22.4)
   '@hookform/resolvers':
     specifier: ^3.3.4
     version: 3.3.4(react-hook-form@7.51.2)
@@ -1696,10 +1696,10 @@ packages:
       - supports-color
     dev: false
 
-  /@cyberlab/cyber-account-plugins@0.0.3(zod@3.22.4):
-    resolution: {integrity: sha512-QYFHVY0JUzyktbnsaFMRg/TSU0hZwL2ZkdgyXZ1qFrcnk0i4RlJGVAfoubq5IyleqAw70WdaWL/3QuLi/Enwqw==}
+  /@cyberlab/cyber-account-plugins@0.0.5-beta.1(zod@3.22.4):
+    resolution: {integrity: sha512-6cABE4QPXadO8qp2iRDh4JGgV+y+fDFEfHplIwgtbh92iwIRxj7blKYZT8tF21fkWx8jU16Vo5oZ1lfcg+6FpA==}
     dependencies:
-      '@cyberlab/cyber-account': 2.3.2(typescript@5.4.5)(zod@3.22.4)
+      '@cyberlab/cyber-account': 3.0.0-beta.1(typescript@5.4.5)(zod@3.22.4)
       '@zerodev/ecdsa-validator': 5.1.2(@zerodev/sdk@5.1.14)(permissionless@0.0.34)(viem@2.9.16)
       '@zerodev/sdk': 5.1.14(viem@2.9.16)
       '@zerodev/session-key': 5.1.2(@zerodev/sdk@5.1.14)(permissionless@0.0.34)(viem@2.9.16)
@@ -1708,17 +1708,6 @@ packages:
       viem: 2.9.16(typescript@5.4.5)(zod@3.22.4)
     transitivePeerDependencies:
       - bufferutil
-      - utf-8-validate
-      - zod
-    dev: false
-
-  /@cyberlab/cyber-account@2.3.2(typescript@5.4.5)(zod@3.22.4):
-    resolution: {integrity: sha512-OR3I57VTU28sCA17p1Jcx6vJstY6TfSCsxBfSX393RrvMeXNP14G8+lqVaFE/WB50+rRjN7YdsTVYvSdZ8dv4Q==}
-    dependencies:
-      viem: 1.21.4(typescript@5.4.5)(zod@3.22.4)
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
       - utf-8-validate
       - zod
     dev: false
