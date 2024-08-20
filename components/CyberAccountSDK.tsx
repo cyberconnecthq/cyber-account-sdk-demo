@@ -167,11 +167,10 @@ function CyberAccountSDK() {
     });
 
     cyberAccount
-      .checkOwnerChange()
+      .checkOwner()
       .then((res) => {
-        console.log("🚀 ~ cyberAccount.checkOwnerChange ~ res:", res);
-        if (res) {
-          setNewOwnerAddress(res);
+        if (res.isChanged) {
+          setNewOwnerAddress(res.currentOwner);
         } else {
           setNewOwnerAddress(false);
         }

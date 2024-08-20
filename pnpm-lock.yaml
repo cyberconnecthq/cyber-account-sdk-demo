@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@cyberlab/cyber-account':
-    specifier: ^2.3.2
-    version: 2.3.2(typescript@5.4.5)(zod@3.22.4)
+    specifier: 3.0.0-beta.1
+    version: 3.0.0-beta.1(typescript@5.4.5)(zod@3.22.4)
   '@cyberlab/cyber-account-plugins':
     specifier: ^0.0.3
     version: 0.0.3(zod@3.22.4)
@@ -1714,6 +1714,17 @@ packages:
 
   /@cyberlab/cyber-account@2.3.2(typescript@5.4.5)(zod@3.22.4):
     resolution: {integrity: sha512-OR3I57VTU28sCA17p1Jcx6vJstY6TfSCsxBfSX393RrvMeXNP14G8+lqVaFE/WB50+rRjN7YdsTVYvSdZ8dv4Q==}
+    dependencies:
+      viem: 1.21.4(typescript@5.4.5)(zod@3.22.4)
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+      - zod
+    dev: false
+
+  /@cyberlab/cyber-account@3.0.0-beta.1(typescript@5.4.5)(zod@3.22.4):
+    resolution: {integrity: sha512-EVpZCS2ahNiNu9qHpMLMAffeuRsbQBvX7kLKQOVhQAlNRdM8dnPUZ5HEaRS7DXwxOPbXpFELV36xGaBIAngl8g==}
     dependencies:
       viem: 1.21.4(typescript@5.4.5)(zod@3.22.4)
     transitivePeerDependencies:
@@ -9908,6 +9919,7 @@ packages:
 
   /rimraf@2.6.3:
     resolution: {integrity: sha512-mwqeW5XsA2qAejG46gYdENaxXjx9onRNCfn7L0duuP4hCuTIi/QO7PDK07KJfp1d+izWPrzEJDcSqBa0OZQriA==}
+    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
     dependencies:
       glob: 7.2.3
