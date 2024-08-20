@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@cyberlab/cyber-account": "^2.3.2",
+    "@cyberlab/cyber-account": "^2.3.5",
     "@cyberlab/cyber-account-plugins": "^0.0.3",
     "@hookform/resolvers": "^3.3.4",
     "@radix-ui/react-accordion": "^1.1.2",
