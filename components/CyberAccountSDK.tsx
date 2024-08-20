@@ -62,7 +62,7 @@ const contractABI = parseAbi([
 function CyberAccountSDK() {
   const [cyberAccount, setCyberAccount] = useState<CyberAccount>();
   const [newOwnerAddress, setNewOwnerAddress] = useState<
-    Address | undefined | "none" | false
+    Address | undefined | false
   >();
   const [cyberAccountByEOA, setCyberAccountByEOA] = useState<CyberAccount[]>();
 
