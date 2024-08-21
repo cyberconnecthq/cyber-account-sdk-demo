@@ -64,6 +64,8 @@ function CyberAccountSDK() {
   const [currentOwnerAddress, setCurrentOwnerAddress] = useState<
     Address | undefined | false
   >();
+  const [isChanged, setIsChanged] = useState<boolean | undefined>(undefined);
+  const [isDeployed, setIsDeployed] = useState<boolean | undefined>(undefined);
   const [cyberAccountByEOA, setCyberAccountByEOA] = useState<CyberAccount[]>();
 
   const [sessionKeyAccount, setSessionKeyAccount] =
@@ -169,6 +171,8 @@ function CyberAccountSDK() {
     cyberAccount
       .checkOwner()
       .then((res) => {
+        setIsChanged(res.isChanged);
+        setIsDeployed(true);
         if (res.isChanged) {
           setCurrentOwnerAddress(res.currentOwner);
         } else {
@@ -178,6 +182,8 @@ function CyberAccountSDK() {
       .catch((e) => {
         if (e instanceof CyberAccountNotDeployedError) {
           setCurrentOwnerAddress(false);
+          setIsChanged(false);
+          setIsDeployed(false);
         }
       });
     setCyberAccount(cyberAccount);
@@ -383,22 +389,24 @@ function CyberAccountSDK() {
   return (
     <div className="flex flex-col gap-y-8 w-[500px]">
       <div className="flex flex-col gap-y-2 justify-center">
-        <p className="text-lg font-bold mt-3">Cyber Account</p>
+        <p className="text-lg font-bold mt-3">CyberAccount</p>
         <div>
           <span className="font-bold text-sm"> Address </span>:{" "}
           {cyberAccount?.address || "-"}
         </div>
         <div>
           <span className="font-bold text-sm">Is changed: </span>
-          {currentOwnerAddress !== undefined
-            ? (!!(
-                currentOwnerAddress !== cyberAccount?.owner.address
-              )).toString()
-            : "-"}
+          {isChanged !== undefined ? isChanged.toString() : "-"}
+        </div>
+        <div>
+          <span className="font-bold text-sm">Is deployed: </span>
+          {isDeployed !== undefined ? isDeployed.toString() : "-"}
         </div>
         <div>
           <span className="font-bold text-sm">Current Owner Address: </span>
-          {currentOwnerAddress !== undefined ? currentOwnerAddress : "-"}
+          {currentOwnerAddress !== undefined
+            ? currentOwnerAddress || cyberAccount?.owner.address
+            : "-"}
         </div>
         <p className="text-lg font-bold mt-8">All Cyber Accounts by EOA</p>
         <div>
