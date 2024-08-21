@@ -4,6 +4,7 @@ import { http, createConfig } from "wagmi";
 import { optimismSepolia } from "wagmi/chains";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { testnetChains } from "@/rpcClient";
 
 const queryClient = new QueryClient();
 const config = createConfig({
@@ -17,6 +18,7 @@ const config = createConfig({
         },
       },
     },
+    ...testnetChains,
   ],
   transports: {
     [optimismSepolia.id]: http("https://sepolia.optimism.io	"),
