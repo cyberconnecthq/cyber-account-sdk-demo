@@ -7,6 +7,7 @@ import { testnetChains } from "@/rpcClient";
 
 const queryClient = new QueryClient();
 const config = createConfig({
+  // @ts-ignore
   chains: testnetChains,
   transports: testnetChains.reduce(
     (acc, chain) => ({
