@@ -19,8 +19,8 @@ const SwapSigner = ({
   const [newSigner, setNewSigner] = useState<Hex>();
 
   return (
-    <div className="w-full border-2 border-black rounded-md p-4 flex flex-col items-center gap-y-4">
-      <p className="text-lg font-bold">Swap Signer</p>
+    <div className="w-full border-2 border-black rounded-md p-4 flex flex-col items-center gap-y-4 mt-8">
+      <p className="text-lg font-bold">Change Signer</p>
       <Input
         placeholder="New Signer Address"
         onChange={(e) => setNewSigner(e.target.value as Hex)}
@@ -30,10 +30,10 @@ const SwapSigner = ({
         onClick={() => swap(newSigner)}
         disabled={!cyberAccount}
       >
-        {loading ? <Loader2 className="animate-spin" /> : "Swap"}
+        {loading ? <Loader2 className="animate-spin" /> : "Change"}
       </Button>
       <div>
-        Swap Signer Result:{" "}
+        Change Signer Result:{" "}
         {hash ? (
           <a
             className="text-blue-500"

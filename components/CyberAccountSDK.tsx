@@ -15,14 +15,17 @@ import {
   parseAbiParameters,
   encodePacked,
   type Hex,
+  type Address,
+  type Chain,
 } from "viem";
-import { optimismSepolia } from "viem/chains";
 import { Button } from "@/components/ui/button";
 import { ParamOperator } from "@zerodev/session-key";
 import {
   CyberBundler,
   CyberAccount,
   CyberPaymaster,
+  CyberAccountNotDeployedError,
+  getAllCyberAccounts,
 } from "@cyberlab/cyber-account";
 import { walletClientToSmartAccountSigner } from "permissionless";
 import {
@@ -37,6 +40,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import SwapSigner from "./SwapSigner";
 import { useWriteContract } from "wagmi";
 import abi from "@/app/abi.json";
+import { Hash } from "viem";
 
 const sessionPrivateKey = generatePrivateKey();
 const sessionKeySigner = privateKeyToAccount(sessionPrivateKey);
@@ -56,8 +60,15 @@ const contractABI = parseAbi([
   "function balanceOf(address owner) external view returns (uint256 balance)",
 ]);
 
-function CyberAccountSDK() {
+function CyberAccountSDK({ currentChain }: { currentChain: Chain }) {
   const [cyberAccount, setCyberAccount] = useState<CyberAccount>();
+  const [currentOwnerAddress, setCurrentOwnerAddress] = useState<
+    Address | undefined | false
+  >();
+  const [isChanged, setIsChanged] = useState<boolean | undefined>(undefined);
+  const [isDeployed, setIsDeployed] = useState<boolean | undefined>(undefined);
+  const [cyberAccountsByEOA, setCyberAccountsByEOA] =
+    useState<CyberAccount[]>();
 
   const [sessionKeyAccount, setSessionKeyAccount] =
     useState<SessionKeyAccount>();
@@ -76,12 +87,14 @@ function CyberAccountSDK() {
     setDeserializedSessionKeyAccountClient,
   ] = useState<SessionKeyAccountClient>();
 
-  const [mintWithCyberAccountHash, setMintWithCyberAccountHash] =
-    useState<string>();
+  const [mintWithCyberAccountHash, setMintWithCyberAccountHash] = useState<{
+    address: Address;
+    hash: string;
+  }>();
   const [mintWithSessionKeyAccountHash, setMintWithSessionKeyAccountHash] =
     useState<string>();
 
-  const [mintingWithCyberAccount, setMintingWithCyberAccount] = useState(false);
+  const [mintingWithCyberAccount, setMintingWithCyberAccount] = useState("");
   const [swapingSigner, setSwapingSigner] = useState(false);
   const [swapSignerHash, setSwapSignerHash] = useState<string>();
   const [mintingWithSessionKeyAccount, setMintingWithSessionKeyAccount] =
@@ -148,7 +161,7 @@ function CyberAccountSDK() {
 
     const cyberAccount = new CyberAccount({
       chain: {
-        id: optimismSepolia.id,
+        id: currentChain.id,
         testnet: true,
       },
       owner: {
@@ -159,8 +172,56 @@ function CyberAccountSDK() {
       // paymaster: cyberPaymaster,
     });
 
+    cyberAccount
+      .checkOwner()
+      .then((res) => {
+        setIsChanged(res.isChanged);
+        setIsDeployed(true);
+        if (res.isChanged) {
+          setCurrentOwnerAddress(res.currentOwner);
+        } else {
+          setCurrentOwnerAddress(false);
+        }
+      })
+      .catch((e) => {
+        if (e instanceof CyberAccountNotDeployedError) {
+          setCurrentOwnerAddress(false);
+          setIsChanged(false);
+          setIsDeployed(false);
+        }
+      });
     setCyberAccount(cyberAccount);
-  }, [eoaAddress]);
+  }, [eoaAddress, signMessageAsync, currentChain]);
+
+  useEffect(() => {
+    if (!eoaAddress) return;
+    const sign = async (message: Hex) => {
+      return await signMessageAsync({
+        account: eoaAddress,
+        message: { raw: message },
+      });
+    };
+
+    const cyberBundler = new CyberBundler({
+      rpcUrl: BUNDLER_RPC,
+      appId: APP_ID,
+    });
+
+    getAllCyberAccounts({
+      chain: {
+        id: currentChain.id,
+        testnet: true,
+      },
+      owner: {
+        address: eoaAddress,
+        signMessage: sign,
+      },
+      bundler: cyberBundler,
+    }).then((accounts) => {
+      console.log("accounts", accounts);
+      setCyberAccountsByEOA(accounts);
+    });
+  }, [eoaAddress, signMessageAsync, currentChain?.id]);
 
   const handleSwapSigner = async (newSigner?: Hex) => {
     if (newSigner && cyberAccount) {
@@ -182,10 +243,10 @@ function CyberAccountSDK() {
     }
   };
 
-  const mint = async () => {
+  const mint = async ({ cyberAccount }: { cyberAccount: CyberAccount }) => {
     if (!cyberAccount) return;
 
-    setMintingWithCyberAccount(true);
+    setMintingWithCyberAccount(cyberAccount.address);
     const res = await cyberAccount
       .sendTransaction({
         to: contractAddress,
@@ -197,10 +258,12 @@ function CyberAccountSDK() {
         }),
       })
       .finally(() => {
-        setMintingWithCyberAccount(false);
+        setMintingWithCyberAccount("");
       });
 
-    setMintWithCyberAccountHash(res);
+    if (res) {
+      setMintWithCyberAccountHash({ address: cyberAccount.address, hash: res });
+    }
   };
 
   const createClient = async () => {
@@ -332,33 +395,72 @@ function CyberAccountSDK() {
 
   return (
     <div className="flex flex-col gap-y-8 w-[500px]">
-      <div className="flex flex-col gap-y-4 justify-center">
-        <p className="text-lg font-bold">Cyber Account</p>
-        {<div>Address: {cyberAccount?.address || "-"}</div>}
-        <Button onClick={mint} disabled={!cyberAccount}>
-          {mintingWithCyberAccount ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            "Mint With CyberAccount"
-          )}
-        </Button>
+      <div className="flex flex-col gap-y-2 justify-center">
+        <p className="text-lg font-bold mt-3">CyberAccount</p>
         <div>
-          Mint result:{" "}
-          {mintWithCyberAccountHash ? (
-            <a
-              className="text-blue-500"
-              target="_blank"
-              href={
-                optimismSepolia.blockExplorers.default.url +
-                "/tx/" +
-                mintWithCyberAccountHash
-              }
-            >
-              Transaction Hash
-            </a>
-          ) : (
-            "-"
-          )}
+          <span className="font-bold text-sm"> Address </span>:{" "}
+          {cyberAccount?.address || "-"}
+        </div>
+        <div>
+          <span className="font-bold text-sm">Deployed: </span>
+          {isDeployed !== undefined ? isDeployed.toString() : "-"}
+        </div>
+        <div>
+          <span className="font-bold text-sm">Owner Changed: </span>
+          {isChanged !== undefined ? isChanged.toString() : "-"}
+        </div>
+        <div>
+          <span className="font-bold text-sm">Current Owner Address: </span>
+          {currentOwnerAddress !== undefined
+            ? currentOwnerAddress || cyberAccount?.owner.address
+            : "-"}
+        </div>
+        {isChanged && (
+          <p className="text-red-500 text-sm">
+            This CyberAccount has been changed to a new owner. Switch to the new
+            owner to send transactions.
+          </p>
+        )}
+        <p className="text-lg font-bold mt-8">All CyberAccounts by EOA</p>
+        <div className="divide-y flex flex-col gap-y-4">
+          {(cyberAccountsByEOA?.length ?? 0) > 0
+            ? cyberAccountsByEOA?.map((account) => (
+                <div
+                  key={account.address}
+                  className="flex flex-col gap-y-4 pt-4"
+                >
+                  <div>Address: {account.address}</div>
+                  <Button
+                    onClick={() => mint({ cyberAccount: account })}
+                    disabled={!cyberAccount}
+                  >
+                    {mintingWithCyberAccount === account.address ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      "Mint with this CyberAccount"
+                    )}
+                  </Button>
+                  <div>
+                    Mint result:{" "}
+                    {mintWithCyberAccountHash?.address === account.address ? (
+                      <a
+                        className="text-blue-500"
+                        target="_blank"
+                        href={
+                          currentChain?.blockExplorers?.default.url +
+                          "/tx/" +
+                          mintWithCyberAccountHash.hash
+                        }
+                      >
+                        Transaction Hash
+                      </a>
+                    ) : (
+                      "-"
+                    )}
+                  </div>
+                </div>
+              ))
+            : "none"}
         </div>
         <SwapSigner
           cyberAccount={cyberAccount?.address}
@@ -367,7 +469,7 @@ function CyberAccountSDK() {
           hash={swapSignerHash}
         />
       </div>
-      <div className="flex flex-col gap-y-4">
+      <div className="flex flex-col gap-y-4 mt-8">
         <p className="text-lg font-bold">Session Key Account</p>
         {<div>Address: {sessionKeyAccount?.address || "-"}</div>}
         <Button
@@ -381,7 +483,7 @@ function CyberAccountSDK() {
           )}
         </Button>
       </div>
-      <div className="flex flex-col gap-y-4">
+      <div className="flex flex-col gap-y-4 mt-8">
         <p className="text-lg font-bold">Session Key Account Client</p>
         <div>
           Session Key Account Client Status:{" "}
@@ -416,7 +518,7 @@ function CyberAccountSDK() {
               className="text-blue-500"
               target="_blank"
               href={
-                optimismSepolia.blockExplorers.default.url +
+                currentChain?.blockExplorers?.default.url +
                 "/tx/" +
                 mintWithSessionKeyAccountHash
               }
@@ -428,7 +530,7 @@ function CyberAccountSDK() {
           )}
         </div>
       </div>
-      <div className="flex flex-col gap-y-4">
+      <div className="flex flex-col gap-y-4 mt-8">
         <p className="text-lg font-bold">Serialize Session Key Account</p>
         {
           <div className="w-full break-all max-h-[200px] overflow-scroll">
@@ -446,7 +548,7 @@ function CyberAccountSDK() {
           )}
         </Button>
       </div>
-      <div className="flex flex-col gap-y-4">
+      <div className="flex flex-col gap-y-4 mt-8">
         <p className="text-lg font-bold">Deserialize Session Key Account</p>
         <div>
           Address:{" "}
@@ -464,7 +566,7 @@ function CyberAccountSDK() {
           )}
         </Button>
       </div>
-      <div className="flex flex-col gap-y-4">
+      <div className="flex flex-col gap-y-4 mt-8">
         <p className="text-lg font-bold">
           Deserialized Session Key Account Client
         </p>
@@ -499,7 +601,7 @@ function CyberAccountSDK() {
               className="text-blue-500"
               target="_blank"
               href={
-                optimismSepolia.blockExplorers.default.url +
+                currentChain?.blockExplorers?.default.url +
                 "/tx/" +
                 mintWithDeserializedSessionKeyAccountHash
               }
