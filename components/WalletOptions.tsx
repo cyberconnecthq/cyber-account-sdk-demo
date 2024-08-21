@@ -78,9 +78,6 @@ const WalletOptions = () => {
                     value={chain.id.toString()}
                     onSelect={() => {
                       setSelectedChain(chain);
-                      switchChain({
-                        chainId: chain.id,
-                      });
                     }}
                   >
                     {chain.name}
