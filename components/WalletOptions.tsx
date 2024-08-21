@@ -5,24 +5,13 @@ import { testnetChains } from "../rpcClient";
 import * as Select from "@radix-ui/react-select";
 
 const WalletOptions = () => {
-  const { chainId, address } = useAccount();
+  const { chainId } = useAccount();
   const { connectors, connect } = useConnect();
-  const { switchChain, switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useSwitchChain();
   const { disconnect } = useDisconnect();
   const [selectedChain, setSelectedChain] = React.useState(
     testnetChains.find((c) => c.id === chainId) || testnetChains[0]
   );
-  React.useEffect(() => {
-    if (address) {
-      if (chainId !== selectedChain.id) {
-        switchChainAsync({
-          chainId: selectedChain.id,
-        }).catch((err) => {
-          console.error("🚀 ~ WalletOptions ~ switch chain - err", err);
-        });
-      }
-    }
-  }, [address, chainId, selectedChain.id, switchChainAsync]);
 
   return (
     <div className="flex flex-col gap-y-4 items-center">
@@ -76,9 +65,6 @@ const WalletOptions = () => {
                     className="cursor-pointer"
                     key={chain.id}
                     value={chain.id.toString()}
-                    onSelect={() => {
-                      setSelectedChain(chain);
-                    }}
                   >
                     {chain.name}
                   </Select.Item>
