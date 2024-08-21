@@ -15,6 +15,7 @@ import {
   parseAbiParameters,
   encodePacked,
   type Hex,
+  Address,
 } from "viem";
 import { optimismSepolia } from "viem/chains";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,8 @@ import {
   CyberBundler,
   CyberAccount,
   CyberPaymaster,
+  CyberAccountNotDeployedError,
+  getAllCyberAccounts,
 } from "@cyberlab/cyber-account";
 import { walletClientToSmartAccountSigner } from "permissionless";
 import {
@@ -58,6 +61,12 @@ const contractABI = parseAbi([
 
 function CyberAccountSDK() {
   const [cyberAccount, setCyberAccount] = useState<CyberAccount>();
+  const [currentOwnerAddress, setCurrentOwnerAddress] = useState<
+    Address | undefined | false
+  >();
+  const [isChanged, setIsChanged] = useState<boolean | undefined>(undefined);
+  const [isDeployed, setIsDeployed] = useState<boolean | undefined>(undefined);
+  const [cyberAccountByEOA, setCyberAccountByEOA] = useState<CyberAccount[]>();
 
   const [sessionKeyAccount, setSessionKeyAccount] =
     useState<SessionKeyAccount>();
@@ -159,8 +168,55 @@ function CyberAccountSDK() {
       // paymaster: cyberPaymaster,
     });
 
+    cyberAccount
+      .checkOwner()
+      .then((res) => {
+        setIsChanged(res.isChanged);
+        setIsDeployed(true);
+        if (res.isChanged) {
+          setCurrentOwnerAddress(res.currentOwner);
+        } else {
+          setCurrentOwnerAddress(false);
+        }
+      })
+      .catch((e) => {
+        if (e instanceof CyberAccountNotDeployedError) {
+          setCurrentOwnerAddress(false);
+          setIsChanged(false);
+          setIsDeployed(false);
+        }
+      });
     setCyberAccount(cyberAccount);
-  }, [eoaAddress]);
+  }, [eoaAddress, signMessageAsync]);
+
+  useEffect(() => {
+    if (!eoaAddress) return;
+    const sign = async (message: Hex) => {
+      return await signMessageAsync({
+        account: eoaAddress,
+        message: { raw: message },
+      });
+    };
+
+    const cyberBundler = new CyberBundler({
+      rpcUrl: BUNDLER_RPC,
+      appId: APP_ID,
+    });
+
+    getAllCyberAccounts({
+      chain: {
+        id: optimismSepolia.id,
+        testnet: true,
+      },
+      owner: {
+        address: eoaAddress,
+        signMessage: sign,
+      },
+      bundler: cyberBundler,
+    }).then((accounts) => {
+      setCyberAccountByEOA(accounts);
+    });
+  }, [eoaAddress, signMessageAsync]);
 
   const handleSwapSigner = async (newSigner?: Hex) => {
     if (newSigner && cyberAccount) {
@@ -210,7 +266,7 @@ function CyberAccountSDK() {
 
     const sessionKeyAccountClient = await createSessionKeyAccountClient(
       sessionKeyAccount,
-      cyberAccount,
+      cyberAccount
     );
 
     setCreatingSessionKeyAccountClient(false);
@@ -222,7 +278,7 @@ function CyberAccountSDK() {
 
     const sessionKeyAccountClient = await createSessionKeyAccountClient(
       deserializedSessionKeyAccount,
-      cyberAccount,
+      cyberAccount
     );
 
     setDeserializedSessionKeyAccountClient(sessionKeyAccountClient);
@@ -270,7 +326,7 @@ function CyberAccountSDK() {
 
     const serializedAccount = await serializeSessionKeyAccount(
       sessionKeyAccount,
-      sessionPrivateKey,
+      sessionPrivateKey
     );
 
     setSerializingSessionKeyAccount(false);
@@ -285,7 +341,7 @@ function CyberAccountSDK() {
     setDeserializingSessionKeyAccount(true);
     const deserializedSessionKeyAccount = await deserializeSessionKeyAccount(
       cyberAccount.publicClient,
-      serializedSessionKeyAccount,
+      serializedSessionKeyAccount
     );
 
     setDeserializingSessionKeyAccount(false);
@@ -332,10 +388,37 @@ function CyberAccountSDK() {
 
   return (
     <div className="flex flex-col gap-y-8 w-[500px]">
-      <div className="flex flex-col gap-y-4 justify-center">
-        <p className="text-lg font-bold">Cyber Account</p>
-        {<div>Address: {cyberAccount?.address || "-"}</div>}
-        <Button onClick={mint} disabled={!cyberAccount}>
+      <div className="flex flex-col gap-y-2 justify-center">
+        <p className="text-lg font-bold mt-3">CyberAccount</p>
+        <div>
+          <span className="font-bold text-sm"> Address </span>:{" "}
+          {cyberAccount?.address || "-"}
+        </div>
+        <div>
+          <span className="font-bold text-sm">Is changed: </span>
+          {isChanged !== undefined ? isChanged.toString() : "-"}
+        </div>
+        <div>
+          <span className="font-bold text-sm">Is deployed: </span>
+          {isDeployed !== undefined ? isDeployed.toString() : "-"}
+        </div>
+        <div>
+          <span className="font-bold text-sm">Current Owner Address: </span>
+          {currentOwnerAddress !== undefined
+            ? currentOwnerAddress || cyberAccount?.owner.address
+            : "-"}
+        </div>
+        <p className="text-lg font-bold mt-8">All Cyber Accounts by EOA</p>
+        <div>
+          {(cyberAccountByEOA?.length ?? 0) > 0
+            ? cyberAccountByEOA?.map((account) => (
+                <div key={account.address}>
+                  <div>Address: {account.address}</div>
+                </div>
+              ))
+            : "none"}
+        </div>
+        <Button className="mt-8" onClick={mint} disabled={!cyberAccount}>
           {mintingWithCyberAccount ? (
             <Loader2 className="animate-spin" />
           ) : (
@@ -367,7 +450,7 @@ function CyberAccountSDK() {
           hash={swapSignerHash}
         />
       </div>
-      <div className="flex flex-col gap-y-4">
+      <div className="flex flex-col gap-y-4 mt-8">
         <p className="text-lg font-bold">Session Key Account</p>
         {<div>Address: {sessionKeyAccount?.address || "-"}</div>}
         <Button
@@ -381,7 +464,7 @@ function CyberAccountSDK() {
           )}
         </Button>
       </div>
-      <div className="flex flex-col gap-y-4">
+      <div className="flex flex-col gap-y-4 mt-8">
         <p className="text-lg font-bold">Session Key Account Client</p>
         <div>
           Session Key Account Client Status:{" "}
@@ -428,7 +511,7 @@ function CyberAccountSDK() {
           )}
         </div>
       </div>
-      <div className="flex flex-col gap-y-4">
+      <div className="flex flex-col gap-y-4 mt-8">
         <p className="text-lg font-bold">Serialize Session Key Account</p>
         {
           <div className="w-full break-all max-h-[200px] overflow-scroll">
@@ -446,7 +529,7 @@ function CyberAccountSDK() {
           )}
         </Button>
       </div>
-      <div className="flex flex-col gap-y-4">
+      <div className="flex flex-col gap-y-4 mt-8">
         <p className="text-lg font-bold">Deserialize Session Key Account</p>
         <div>
           Address:{" "}
@@ -464,7 +547,7 @@ function CyberAccountSDK() {
           )}
         </Button>
       </div>
-      <div className="flex flex-col gap-y-4">
+      <div className="flex flex-col gap-y-4 mt-8">
         <p className="text-lg font-bold">
           Deserialized Session Key Account Client
         </p>
