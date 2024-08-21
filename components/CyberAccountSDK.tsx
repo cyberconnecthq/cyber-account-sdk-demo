@@ -383,14 +383,21 @@ function CyberAccountSDK() {
 
   return (
     <div className="flex flex-col gap-y-8 w-[500px]">
-      <div className="flex flex-col gap-y-4 justify-center">
+      <div className="flex flex-col gap-y-2 justify-center">
         <p className="text-lg font-bold mt-3">Cyber Account</p>
-        <div>Address: {cyberAccount?.address || "-"}</div>
         <div>
-          Has Swapped Owner:{" "}
+          <span className="font-bold text-sm"> Address </span>:{" "}
+          {cyberAccount?.address || "-"}
+        </div>
+        <div>
+          <span className="font-bold text-sm">Is changed: </span>
           {newOwnerAddress !== undefined ? (!!newOwnerAddress).toString() : "-"}
         </div>
-        <p className="text-lg font-bold mt-3">All Cyber Accounts by EOA</p>
+        <div>
+          <span className="font-bold text-sm">New Owner Address: </span>
+          {newOwnerAddress !== undefined ? newOwnerAddress : "-"}
+        </div>
+        <p className="text-lg font-bold mt-8">All Cyber Accounts by EOA</p>
         <div>
           {(cyberAccountByEOA?.length ?? 0) > 0
             ? cyberAccountByEOA?.map((account) => (
@@ -400,7 +407,7 @@ function CyberAccountSDK() {
               ))
             : "none"}
         </div>
-        <Button onClick={mint} disabled={!cyberAccount}>
+        <Button className="mt-8" onClick={mint} disabled={!cyberAccount}>
           {mintingWithCyberAccount ? (
             <Loader2 className="animate-spin" />
           ) : (
@@ -432,7 +439,7 @@ function CyberAccountSDK() {
           hash={swapSignerHash}
         />
       </div>
-      <div className="flex flex-col gap-y-4">
+      <div className="flex flex-col gap-y-4 mt-8">
         <p className="text-lg font-bold">Session Key Account</p>
         {<div>Address: {sessionKeyAccount?.address || "-"}</div>}
         <Button
@@ -446,7 +453,7 @@ function CyberAccountSDK() {
           )}
         </Button>
       </div>
-      <div className="flex flex-col gap-y-4">
+      <div className="flex flex-col gap-y-4 mt-8">
         <p className="text-lg font-bold">Session Key Account Client</p>
         <div>
           Session Key Account Client Status:{" "}
@@ -493,7 +500,7 @@ function CyberAccountSDK() {
           )}
         </div>
       </div>
-      <div className="flex flex-col gap-y-4">
+      <div className="flex flex-col gap-y-4 mt-8">
         <p className="text-lg font-bold">Serialize Session Key Account</p>
         {
           <div className="w-full break-all max-h-[200px] overflow-scroll">
@@ -511,7 +518,7 @@ function CyberAccountSDK() {
           )}
         </Button>
       </div>
-      <div className="flex flex-col gap-y-4">
+      <div className="flex flex-col gap-y-4 mt-8">
         <p className="text-lg font-bold">Deserialize Session Key Account</p>
         <div>
           Address:{" "}
@@ -529,7 +536,7 @@ function CyberAccountSDK() {
           )}
         </Button>
       </div>
-      <div className="flex flex-col gap-y-4">
+      <div className="flex flex-col gap-y-4 mt-8">
         <p className="text-lg font-bold">
           Deserialized Session Key Account Client
         </p>
