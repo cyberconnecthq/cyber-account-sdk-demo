@@ -1,17 +1,20 @@
 import * as React from "react";
-import { useConnect, useDisconnect, useSwitchChain, useAccount } from "wagmi";
+import { useConnect, useDisconnect, useSwitchChain } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { testnetChains } from "../rpcClient";
 import * as Select from "@radix-ui/react-select";
+import { Chain } from "viem";
 
-const WalletOptions = () => {
-  const { chainId } = useAccount();
+const WalletOptions = ({
+  selectedChain,
+  setSelectedChain,
+}: {
+  selectedChain: Chain;
+  setSelectedChain: (chain: Chain) => void;
+}) => {
   const { connectors, connect } = useConnect();
   const { switchChainAsync } = useSwitchChain();
   const { disconnect } = useDisconnect();
-  const [selectedChain, setSelectedChain] = React.useState(
-    testnetChains.find((c) => c.id === chainId) || testnetChains[0]
-  );
 
   return (
     <div className="flex flex-col gap-y-4 items-center">
@@ -30,7 +33,7 @@ const WalletOptions = () => {
         defaultValue={selectedChain.id.toString()}
         onValueChange={(value) => {
           const _selectedChain = testnetChains.find(
-            (c) => c.id.toString() === value
+            (c) => c.id.toString() === value,
           );
           if (_selectedChain) {
             setSelectedChain(_selectedChain);

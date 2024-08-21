@@ -15,9 +15,9 @@ import {
   parseAbiParameters,
   encodePacked,
   type Hex,
-  Address,
+  type Address,
+  type Chain,
 } from "viem";
-import { optimismSepolia } from "viem/chains";
 import { Button } from "@/components/ui/button";
 import { ParamOperator } from "@zerodev/session-key";
 import {
@@ -40,6 +40,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import SwapSigner from "./SwapSigner";
 import { useWriteContract } from "wagmi";
 import abi from "@/app/abi.json";
+import { Hash } from "viem";
 
 const sessionPrivateKey = generatePrivateKey();
 const sessionKeySigner = privateKeyToAccount(sessionPrivateKey);
@@ -59,14 +60,15 @@ const contractABI = parseAbi([
   "function balanceOf(address owner) external view returns (uint256 balance)",
 ]);
 
-function CyberAccountSDK() {
+function CyberAccountSDK({ currentChain }: { currentChain: Chain }) {
   const [cyberAccount, setCyberAccount] = useState<CyberAccount>();
   const [currentOwnerAddress, setCurrentOwnerAddress] = useState<
     Address | undefined | false
   >();
   const [isChanged, setIsChanged] = useState<boolean | undefined>(undefined);
   const [isDeployed, setIsDeployed] = useState<boolean | undefined>(undefined);
-  const [cyberAccountByEOA, setCyberAccountByEOA] = useState<CyberAccount[]>();
+  const [cyberAccountsByEOA, setCyberAccountsByEOA] =
+    useState<CyberAccount[]>();
 
   const [sessionKeyAccount, setSessionKeyAccount] =
     useState<SessionKeyAccount>();
@@ -85,12 +87,14 @@ function CyberAccountSDK() {
     setDeserializedSessionKeyAccountClient,
   ] = useState<SessionKeyAccountClient>();
 
-  const [mintWithCyberAccountHash, setMintWithCyberAccountHash] =
-    useState<string>();
+  const [mintWithCyberAccountHash, setMintWithCyberAccountHash] = useState<{
+    address: Address;
+    hash: string;
+  }>();
   const [mintWithSessionKeyAccountHash, setMintWithSessionKeyAccountHash] =
     useState<string>();
 
-  const [mintingWithCyberAccount, setMintingWithCyberAccount] = useState(false);
+  const [mintingWithCyberAccount, setMintingWithCyberAccount] = useState("");
   const [swapingSigner, setSwapingSigner] = useState(false);
   const [swapSignerHash, setSwapSignerHash] = useState<string>();
   const [mintingWithSessionKeyAccount, setMintingWithSessionKeyAccount] =
@@ -157,7 +161,7 @@ function CyberAccountSDK() {
 
     const cyberAccount = new CyberAccount({
       chain: {
-        id: optimismSepolia.id,
+        id: currentChain.id,
         testnet: true,
       },
       owner: {
@@ -187,7 +191,7 @@ function CyberAccountSDK() {
         }
       });
     setCyberAccount(cyberAccount);
-  }, [eoaAddress, signMessageAsync]);
+  }, [eoaAddress, signMessageAsync, currentChain]);
 
   useEffect(() => {
     if (!eoaAddress) return;
@@ -205,7 +209,7 @@ function CyberAccountSDK() {
 
     getAllCyberAccounts({
       chain: {
-        id: optimismSepolia.id,
+        id: currentChain.id,
         testnet: true,
       },
       owner: {
@@ -214,9 +218,10 @@ function CyberAccountSDK() {
       },
       bundler: cyberBundler,
     }).then((accounts) => {
-      setCyberAccountByEOA(accounts);
+      console.log("accounts", accounts);
+      setCyberAccountsByEOA(accounts);
     });
-  }, [eoaAddress, signMessageAsync]);
+  }, [eoaAddress, signMessageAsync, currentChain?.id]);
 
   const handleSwapSigner = async (newSigner?: Hex) => {
     if (newSigner && cyberAccount) {
@@ -238,10 +243,10 @@ function CyberAccountSDK() {
     }
   };
 
-  const mint = async () => {
+  const mint = async ({ cyberAccount }: { cyberAccount: CyberAccount }) => {
     if (!cyberAccount) return;
 
-    setMintingWithCyberAccount(true);
+    setMintingWithCyberAccount(cyberAccount.address);
     const res = await cyberAccount
       .sendTransaction({
         to: contractAddress,
@@ -253,10 +258,10 @@ function CyberAccountSDK() {
         }),
       })
       .finally(() => {
-        setMintingWithCyberAccount(false);
+        setMintingWithCyberAccount("");
       });
 
-    setMintWithCyberAccountHash(res);
+    setMintWithCyberAccountHash({ address: cyberAccount.address, hash: res });
   };
 
   const createClient = async () => {
@@ -266,7 +271,7 @@ function CyberAccountSDK() {
 
     const sessionKeyAccountClient = await createSessionKeyAccountClient(
       sessionKeyAccount,
-      cyberAccount
+      cyberAccount,
     );
 
     setCreatingSessionKeyAccountClient(false);
@@ -278,7 +283,7 @@ function CyberAccountSDK() {
 
     const sessionKeyAccountClient = await createSessionKeyAccountClient(
       deserializedSessionKeyAccount,
-      cyberAccount
+      cyberAccount,
     );
 
     setDeserializedSessionKeyAccountClient(sessionKeyAccountClient);
@@ -326,7 +331,7 @@ function CyberAccountSDK() {
 
     const serializedAccount = await serializeSessionKeyAccount(
       sessionKeyAccount,
-      sessionPrivateKey
+      sessionPrivateKey,
     );
 
     setSerializingSessionKeyAccount(false);
@@ -341,7 +346,7 @@ function CyberAccountSDK() {
     setDeserializingSessionKeyAccount(true);
     const deserializedSessionKeyAccount = await deserializeSessionKeyAccount(
       cyberAccount.publicClient,
-      serializedSessionKeyAccount
+      serializedSessionKeyAccount,
     );
 
     setDeserializingSessionKeyAccount(false);
@@ -395,12 +400,12 @@ function CyberAccountSDK() {
           {cyberAccount?.address || "-"}
         </div>
         <div>
-          <span className="font-bold text-sm">Is changed: </span>
-          {isChanged !== undefined ? isChanged.toString() : "-"}
+          <span className="font-bold text-sm">Deployed: </span>
+          {isDeployed !== undefined ? isDeployed.toString() : "-"}
         </div>
         <div>
-          <span className="font-bold text-sm">Is deployed: </span>
-          {isDeployed !== undefined ? isDeployed.toString() : "-"}
+          <span className="font-bold text-sm">Owner Changed: </span>
+          {isChanged !== undefined ? isChanged.toString() : "-"}
         </div>
         <div>
           <span className="font-bold text-sm">Current Owner Address: </span>
@@ -408,40 +413,52 @@ function CyberAccountSDK() {
             ? currentOwnerAddress || cyberAccount?.owner.address
             : "-"}
         </div>
-        <p className="text-lg font-bold mt-8">All Cyber Accounts by EOA</p>
-        <div>
-          {(cyberAccountByEOA?.length ?? 0) > 0
-            ? cyberAccountByEOA?.map((account) => (
-                <div key={account.address}>
+        {isChanged && (
+          <p className="text-red-500 text-sm">
+            This CyberAccount has been changed to a new owner. Switch to the new
+            owner to send transactions.
+          </p>
+        )}
+        <p className="text-lg font-bold mt-8">All CyberAccounts by EOA</p>
+        <div className="divide-y flex flex-col gap-y-4">
+          {(cyberAccountsByEOA?.length ?? 0) > 0
+            ? cyberAccountsByEOA?.map((account) => (
+                <div
+                  key={account.address}
+                  className="flex flex-col gap-y-4 pt-4"
+                >
                   <div>Address: {account.address}</div>
+                  <Button
+                    onClick={() => mint({ cyberAccount: account })}
+                    disabled={!cyberAccount}
+                  >
+                    {mintingWithCyberAccount === account.address ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      "Mint with this CyberAccount"
+                    )}
+                  </Button>
+                  <div>
+                    Mint result:{" "}
+                    {mintWithCyberAccountHash?.address === account.address ? (
+                      <a
+                        className="text-blue-500"
+                        target="_blank"
+                        href={
+                          currentChain?.blockExplorers?.default.url +
+                          "/tx/" +
+                          mintWithCyberAccountHash.hash
+                        }
+                      >
+                        Transaction Hash
+                      </a>
+                    ) : (
+                      "-"
+                    )}
+                  </div>
                 </div>
               ))
             : "none"}
-        </div>
-        <Button className="mt-8" onClick={mint} disabled={!cyberAccount}>
-          {mintingWithCyberAccount ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            "Mint With CyberAccount"
-          )}
-        </Button>
-        <div>
-          Mint result:{" "}
-          {mintWithCyberAccountHash ? (
-            <a
-              className="text-blue-500"
-              target="_blank"
-              href={
-                optimismSepolia.blockExplorers.default.url +
-                "/tx/" +
-                mintWithCyberAccountHash
-              }
-            >
-              Transaction Hash
-            </a>
-          ) : (
-            "-"
-          )}
         </div>
         <SwapSigner
           cyberAccount={cyberAccount?.address}
@@ -499,7 +516,7 @@ function CyberAccountSDK() {
               className="text-blue-500"
               target="_blank"
               href={
-                optimismSepolia.blockExplorers.default.url +
+                currentChain?.blockExplorers?.default.url +
                 "/tx/" +
                 mintWithSessionKeyAccountHash
               }
@@ -582,7 +599,7 @@ function CyberAccountSDK() {
               className="text-blue-500"
               target="_blank"
               href={
-                optimismSepolia.blockExplorers.default.url +
+                currentChain?.blockExplorers?.default.url +
                 "/tx/" +
                 mintWithDeserializedSessionKeyAccountHash
               }
