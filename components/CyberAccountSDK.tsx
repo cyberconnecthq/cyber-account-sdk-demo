@@ -61,7 +61,7 @@ const contractABI = parseAbi([
 
 function CyberAccountSDK() {
   const [cyberAccount, setCyberAccount] = useState<CyberAccount>();
-  const [newOwnerAddress, setNewOwnerAddress] = useState<
+  const [currentOwnerAddress, setCurrentOwnerAddress] = useState<
     Address | undefined | false
   >();
   const [cyberAccountByEOA, setCyberAccountByEOA] = useState<CyberAccount[]>();
@@ -170,15 +170,14 @@ function CyberAccountSDK() {
       .checkOwner()
       .then((res) => {
         if (res.isChanged) {
-          setNewOwnerAddress(res.currentOwner);
+          setCurrentOwnerAddress(res.currentOwner);
         } else {
-          setNewOwnerAddress(false);
+          setCurrentOwnerAddress(false);
         }
       })
       .catch((e) => {
         if (e instanceof CyberAccountNotDeployedError) {
-          console.log("CyberAccount not deployed");
-          setNewOwnerAddress(false);
+          setCurrentOwnerAddress(false);
         }
       });
     setCyberAccount(cyberAccount);
@@ -391,11 +390,15 @@ function CyberAccountSDK() {
         </div>
         <div>
           <span className="font-bold text-sm">Is changed: </span>
-          {newOwnerAddress !== undefined ? (!!newOwnerAddress).toString() : "-"}
+          {currentOwnerAddress !== undefined
+            ? (!!(
+                currentOwnerAddress !== cyberAccount?.owner.address
+              )).toString()
+            : "-"}
         </div>
         <div>
-          <span className="font-bold text-sm">New Owner Address: </span>
-          {newOwnerAddress !== undefined ? newOwnerAddress : "-"}
+          <span className="font-bold text-sm">Current Owner Address: </span>
+          {currentOwnerAddress !== undefined ? currentOwnerAddress : "-"}
         </div>
         <p className="text-lg font-bold mt-8">All Cyber Accounts by EOA</p>
         <div>
