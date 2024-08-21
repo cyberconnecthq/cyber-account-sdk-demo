@@ -261,7 +261,9 @@ function CyberAccountSDK({ currentChain }: { currentChain: Chain }) {
         setMintingWithCyberAccount("");
       });
 
-    setMintWithCyberAccountHash({ address: cyberAccount.address, hash: res });
+    if (res) {
+      setMintWithCyberAccountHash({ address: cyberAccount.address, hash: res });
+    }
   };
 
   const createClient = async () => {
