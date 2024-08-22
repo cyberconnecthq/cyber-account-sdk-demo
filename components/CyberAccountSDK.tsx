@@ -95,8 +95,11 @@ function CyberAccountSDK({ currentChain }: { currentChain: Chain }) {
     useState<string>();
 
   const [mintingWithCyberAccount, setMintingWithCyberAccount] = useState("");
-  const [swapingSigner, setSwapingSigner] = useState(false);
-  const [swapSignerHash, setSwapSignerHash] = useState<string>();
+  const [swapingSigner, setSwapingSigner] = useState("");
+  const [swapSignerHash, setSwapSignerHash] = useState<{
+    address: Address;
+    hash: string;
+  }>();
   const [mintingWithSessionKeyAccount, setMintingWithSessionKeyAccount] =
     useState(false);
 
@@ -218,14 +221,16 @@ function CyberAccountSDK({ currentChain }: { currentChain: Chain }) {
       },
       bundler: cyberBundler,
     }).then((accounts) => {
-      console.log("accounts", accounts);
       setCyberAccountsByEOA(accounts);
     });
   }, [eoaAddress, signMessageAsync, currentChain?.id]);
 
-  const handleSwapSigner = async (newSigner?: Hex) => {
+  const handleSwapSigner = async (
+    cyberAccount?: CyberAccount,
+    newSigner?: Hex,
+  ) => {
     if (newSigner && cyberAccount) {
-      setSwapingSigner(true);
+      setSwapingSigner(cyberAccount.address);
       const res = await cyberAccount
         .sendTransaction({
           to: "0x417f5a41305DDc99D18B5E176521b468b2a31B86",
@@ -236,10 +241,12 @@ function CyberAccountSDK({ currentChain }: { currentChain: Chain }) {
           }),
         })
         .finally(() => {
-          setSwapingSigner(false);
+          setSwapingSigner("");
         });
 
-      setSwapSignerHash(res);
+      if (res) {
+        setSwapSignerHash({ address: cyberAccount.address, hash: res });
+      }
     }
   };
 
@@ -422,7 +429,7 @@ function CyberAccountSDK({ currentChain }: { currentChain: Chain }) {
           </p>
         )}
         <p className="text-lg font-bold mt-8">All CyberAccounts by EOA</p>
-        <div className="divide-y flex flex-col gap-y-4">
+        <div className="divide-y flex flex-col gap-y-4 divide-black divide-dotted">
           {(cyberAccountsByEOA?.length ?? 0) > 0
             ? cyberAccountsByEOA?.map((account) => (
                 <div
@@ -458,16 +465,21 @@ function CyberAccountSDK({ currentChain }: { currentChain: Chain }) {
                       "-"
                     )}
                   </div>
+                  <SwapSigner
+                    cyberAccount={account.address}
+                    swap={(newSigner) => handleSwapSigner(account, newSigner)}
+                    loading={swapingSigner === account?.address}
+                    hash={
+                      swapSignerHash?.address &&
+                      swapSignerHash.address === account?.address
+                        ? swapSignerHash?.hash
+                        : undefined
+                    }
+                  />
                 </div>
               ))
             : "none"}
         </div>
-        <SwapSigner
-          cyberAccount={cyberAccount?.address}
-          swap={handleSwapSigner}
-          loading={swapingSigner}
-          hash={swapSignerHash}
-        />
       </div>
       <div className="flex flex-col gap-y-4 mt-8">
         <p className="text-lg font-bold">Session Key Account</p>

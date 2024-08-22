@@ -19,7 +19,7 @@ const SwapSigner = ({
   const [newSigner, setNewSigner] = useState<Hex>();
 
   return (
-    <div className="w-full border-2 border-black rounded-md p-4 flex flex-col items-center gap-y-4 mt-8">
+    <div className="w-full border-2 border-black rounded-md p-4 flex flex-col items-center gap-y-4">
       <p className="text-lg font-bold">Change Signer</p>
       <Input
         placeholder="New Signer Address"
